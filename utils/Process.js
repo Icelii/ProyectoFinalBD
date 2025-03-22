@@ -16,7 +16,6 @@ class Process {
         this.finish = false;
     }
 
-    //getters
     get ProcessArguments() {
         return this.process_arguments;
     }
@@ -45,7 +44,6 @@ class Process {
         return this.end_time;
     }
 
-    //setters
     set ProcessArguments(value) {
         this.process_arguments = value;
     }
@@ -71,13 +69,6 @@ class Process {
                 this.outs += text;
             });
             
-            /*this.process.stdout.on("close", (code) => {
-                this.exit_code = code.toString();
-                this.outs += code.toString();
-                this.end_time = Date.now();
-                resolve(true);
-            });*/
-
             this.process.on('close', (code) => {
                 this.exit_code = code.toString();
                 this.outs += code.toString();
@@ -90,10 +81,6 @@ class Process {
                 this.errors += text;
                 this.outs += text;
             });
-            
-            // this.process.stdin.on("finish", () => {
-                
-            // });
             
             this.process.stderr.on("data", (chunk) => {
                 const text = chunk.toString();
@@ -125,13 +112,6 @@ class Process {
             this.outs += text;
         });
         
-        /*this.process.stdout.on("close", (code) => {
-            this.exit_code = code.toString();
-            this.outs += code.toString();
-            this.end_time = Date.now();
-            this.finish();
-        });*/
-
         this.process.on('close', (code) => {
             this.exit_code = code.toString();
             this.outs += code.toString();
@@ -144,10 +124,6 @@ class Process {
             this.errors += text;
             this.outs += text;
         });
-        
-        // this.process.stdin.on("finish", () => {
-            
-        // });
         
         this.process.stderr.on("data", (chunk) => {
             const text = chunk.toString();
