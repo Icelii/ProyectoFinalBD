@@ -1,23 +1,37 @@
 const Process = require('./utils/Process');
 const sleep = require('./utils/sleep');
+const generadorCsv = require("./utils/generador_datos")
+const insertData = require("./insertar_datos_sql") 
 
 const metricas = {
     mysql: {
-        export: null,
-        drop: null,
-        import: null
+        autorInsertExecutionTime: null,
+        libroInsertExecutionTime: null,
+        autorCsvCreationTime: null,
     },
-    mongo: {
-        export: null,
-        drop: null,
-        import: null
-    }
 };
 
 (async () => {
-    //TODO: Crear las metricas
-    
-    //Imprimir métricas
+    //INSERT MASIVO AUTORES
+    const startAutor = Date.now();
+    await insertData.mysql_insertAutor(1, 300);
+    metricas.mysql.autorInsertExecutionTime = Date.now() - startAutor;
+
+    //INSERT MASIVO LIBROS
+    const startLibro = Date.now();
+    await insertData.mysql_insertLibro(2, 30);
+    metricas.mysql.libroInsertExecutionTime = Date.now() - startLibro;
+
+    //TODO: REDUCIR ESTA PARTE DEL CÓDIGO
+    //GENERAR CSV AUTOR
+    const fileAutorNum = 5;
+    const startAutorCsv = Date.now();
+    for(let i= 1; i <= fileAutorNum; i++){
+        const authorFilePath = `./exports/Authors csv/Autores_${i}.csv`;    
+        generadorCsv.generate_AuthorsCsv(10, authorFilePath);
+        metricas.mysql.autorCsvCreationTime = Date.now() - startAutorCsv;
+    }
+        
     console.log(metricas);
     generarReporte(metricas);
 })();
@@ -26,16 +40,9 @@ function generarReporte(metricas) {
 
     const grafico_mysql = {
         type: "bar",
-        labels: `['Export', 'Drop', 'Import']`,
-        data: `[${metricas.mysql.export}, ${metricas.mysql.drop}, ${metricas.mysql.import}]`,
+        labels: `['Insert authors', 'Insert books', 'Autor csv']`,
+        data: `[${metricas.mysql.autorInsertExecutionTime}, ${metricas.mysql.libroInsertExecutionTime}, ${metricas.mysql.autorCsvCreationTime}]`,
         title: "Pruebas de rendimiento de MySQL"
-    }
-
-    const grafico_mongo = {
-        type: "bar",
-        labels: `['Export', 'Drop', 'Import']`,
-        data: `[${metricas.mongo.export}, ${metricas.mongo.drop}, ${metricas.mongo.import}]`,
-        title: "Pruebas de rendimiento de Mongo"
     }
 
     const reporte = 
@@ -51,14 +58,10 @@ function generarReporte(metricas) {
     <body>
         <div>
             <canvas id="grafico-mysql"></canvas>
-            <hr>
-            <canvas id="grafico-mongo"></canvas>
-
         </div>
 
         <script>
             const mysql = document.getElementById('grafico-mysql');
-            const mongo = document.getElementById('grafico-mongo');
 
             new Chart(mysql, {
                 type: '${grafico_mysql.type}',
@@ -78,30 +81,11 @@ function generarReporte(metricas) {
                     }
                 }
             });
-
-            new Chart(mongo, {
-                type: '${grafico_mongo.type}',
-                data: {
-                labels: ${grafico_mongo.labels},
-                datasets: [{
-                    label: '${grafico_mongo.title}',
-                    data: ${grafico_mongo.data},
-                    borderWidth: 1
-                }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
         </script>
     </body>
     </html>
     `;
 
     const FileStream = require('fs');
-    FileStream.writeFileSync("reporte.html", reporte);
+    FileStream.writeFileSync("./exports/Reportes/reporte_Mysql.html", reporte);
 }
