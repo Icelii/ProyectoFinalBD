@@ -1,0 +1,6 @@
+*.sql
+*.bat
+*.html
+*.json
+*.csv
+!CSV_Mysql.sql
