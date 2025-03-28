@@ -29,57 +29,67 @@ async function getLicenses() {
     await licenseMysql.Finish();
 
     const licenses = licenseMysql.outs.split('\n')
-        .filter(line => line.trim() !== '' && line.trim() !== 'license' && line.trim() !== '0' && !line.includes('mysql: [Warning]'))
-        .map(line => line.trim());
+    .filter(line => {
+      const trimmed = line.trim();
+      return trimmed !== '' && trimmed !== 'license' && !line.includes('mysql: [Warning]');
+    })
+    .map(line => line.trim());
 
     return licenses;
 }
 
 function generate_AuthorsCsv(size, stream) {
     let csv = "";
-    const startTime = Date.now();
-    // let licenses = []; ---> usando el csv de autores
     let _stream = stream ? FileStream.createWriteStream(stream, {flags: 'w'}) : null;
+    let licenses = new Set();
 
     for (let i = 0; i < size; i++) {
-        const id = i+1;
-        const license = random_text(12, true);
+        let license;
+        
+        do {
+            license = random_text(12, true);
+        } while (licenses.has(license)); 
+        
+        licenses.add(license);
+
+        const id = i + 1;
         const name = random_text(random_number(5, 20));
         const lastname = random_text(random_number(5, 20));
         const secondLastName = random_text(random_number(5, 20));
         const year = random_number(1960, 2000);
 
-        // licenses.push(license); ---> usando el csv de autores
+        const line = `${id},${license},${name},${lastname},${secondLastName},${year}\n`;
 
-        if(stream){
-            _stream.write(`${id},${license},${name},${lastname},${secondLastName},${year}\n`);
-        }else{
-            csv += `${id},${license},${name},${lastname},${secondLastName},${year}\n`
+        if (stream) {
+            _stream.write(line);
+        } else {
+            csv += line;
         }
     }
 
-    if(!stream){
-        return {csv};
-        // return {csv, licenses}; ---> usando el csv de autores
+    if (!stream) {
+        return { csv };
     }
 
     _stream.close();
-    // return licenses; ---> usando el csv de autores
 }
 
-async function generate_BooksCsv(size, stream){ // PARA GENERARLOS A PARTIR DE UN CSV DE AUTORES PON EL PARAMETRO: authorsLicenses y quita el async :)
+async function generate_BooksCsv(size, stream){
     let csv = "";
     let _stream = stream ? FileStream.createWriteStream(stream, {flags: 'w'}) : null;
     const licenses = await getLicenses();
 
+    if (licenses.length === 0) {
+        throw new Error("No hay licencias disponibles para generar los libros.");
+    }
+
     for (let i = 0; i < size; i++) {
-        const id = i+1;
+        const id = Math.floor(Math.random() * 10000);
         const ISBN = random_text(16, true);
         const title = random_text(random_number(5, 20));
-        // const autor_license = authorsLicenses[random_number(0, authorsLicenses.length - 1)]; --->  usando el csv de autores
         const autor_license = licenses[Math.floor(Math.random() * licenses.length)];
         const editorial = random_text(random_number(5, 30));
-        const pages = random_number(0, 1000);
+        const pages = random_number(1, 1000);
         const year = random_number(1960, 2024);
         const genre = random_text(random_number(5, 20));
         const language = random_text(random_number(5, 15));
@@ -93,12 +103,25 @@ async function generate_BooksCsv(size, stream){ // PARA GENERARLOS A PARTIR DE U
             csv += `${id},${ISBN},${title},${autor_license},${editorial},${pages},${year},${genre},${language},${format},${sinopsis},${content}\n`
         }
     }
+}
 
+async function generate_Autorfiles(numFiles, size) {
+    for(let i= 1; i <= numFiles; i++){
+        const authorFilePath = `C:\\ProgramData\\MySQL\\MySQL Server 9.1\\Uploads\\Autores${i}.csv`;    
+        generate_AuthorsCsv(size, authorFilePath);
+    }
+}
+
+async function generate_Bookfiles(numFiles, size, fileName) {
+    for(let i= 1; i <= numFiles; i++){
+        const bookFilePath = `C:\\ProgramData\\MySQL\\MySQL Server 9.1\\Uploads\\${fileName}${i}.csv`;  
+        await generate_BooksCsv(size, bookFilePath);
+    }
 }
 
 module.exports = {
     random_number: random_number,
     random_text: random_text,
-    generate_AuthorsCsv: generate_AuthorsCsv,
-    generate_BooksCsv: generate_BooksCsv,
+    generate_Autorfiles: generate_Autorfiles,
+    generate_Bookfiles: generate_Bookfiles,
 };

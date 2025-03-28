@@ -114,7 +114,7 @@ class Process {
         
         this.process.on('close', (code) => {
             this.exit_code = code.toString();
-            this.outs += code.toString();
+            this.outs;
             this.end_time = Date.now();
             this.finish = true;
         });
