@@ -290,7 +290,7 @@ function generarReporte(metricas) {
     const graficoData5 = {
         type: "bar",
         labels: [
-            'Tiempo que toma hacer el dump de toda la bd de MySQL',
+            'Tiempo que toma fallar cuando intenta insertar un Libro',
             'Tiempo que toma generar 1,000,000 de datos insertar en mongo, exportar campos csv, crear en mysql tabla old_books e insertar csv '
         ],
         data: [
