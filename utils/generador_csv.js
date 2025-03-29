@@ -7,12 +7,12 @@ function random_number(min, max) {
 
 function random_text(characters_num, includeNumbers = false) {
     let text = "";
-    for(let i = 0; i < characters_num; i++) {
-       if(includeNumbers && Math.random() < 0.5){
-        text += random_number(0,9);
-       }else{
-        text += String.fromCharCode(random_number(65, 89));
-       }
+    for (let i = 0; i < characters_num; i++) {
+        if (includeNumbers && Math.random() < 0.5) {
+            text += String(random_number(0, 9));
+        } else {
+            text += String.fromCharCode(random_number(65, 90));
+        }
     }
 
     return text;

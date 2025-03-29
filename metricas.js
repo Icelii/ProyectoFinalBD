@@ -27,7 +27,15 @@ const metricas = {
     //Tiempo que toma generar 150,000 Autores e insertarlos
     const startAutorCsv = Date.now();
     await generadorCsv.generate_Autorfiles(1, 150000);
-    await loadCsvMysql.loadCsvFiles(1, "Autores", "Autor", "root", "22194");
+    const insertCsvAutor = new Process("mysql");
+    insertCsvAutor.ProcessArguments.push("-uroot");
+    insertCsvAutor.ProcessArguments.push("--password=22194");
+    insertCsvAutor.Execute();
+    insertCsvAutor.Write("use ProyectoBD;");
+    insertCsvAutor.Write("LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.1/Uploads/Autores1.csv' INTO TABLE Autor FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n';");
+    insertCsvAutor.End();
+    await insertCsvAutor.Finish();
+    
     console.log(`[Generar 1 csv 150,000 Autores e insertarlos] Tiempo total: ${Date.now() - startAutorCsv} ms`);
     metricas.mysql.autorCsv = Date.now() - startAutorCsv;
     
@@ -39,7 +47,7 @@ const metricas = {
 
     //Tiempo que toma insertar el CSV
     const insertCsvBook = Date.now();
-    await loadCsvMysql.loadCsvFiles(1, "Librospt", "Libro", "root", "22194");
+    await loadCsvMysql.loadCsvFiles(2, "Librospt", "Libro", "A", "22194");
     console.log(`[Insertar 1 csv Libros] Tiempo total: ${Date.now() - insertCsvBook} ms`);
     metricas.mysql.booksCsvImport = Date.now() - insertCsvBook;
 
@@ -57,7 +65,7 @@ const metricas = {
     
     //Tiempo que toma insertar los 100 archivos a MySQL
     const startInsertCsvLibros = Date.now();
-    await loadCsvMysql.loadCsvFiles(100, "Libros", "Libro", "root", "22194");
+    await loadCsvMysql.loadCsvFiles(100, "Libros", "Libro", "A", "22194");
     console.log(`[Insertar 100 csv archivos a mysql Tiempo total: ${Date.now() - startInsertCsvLibros} ms`);
     metricas.mysql.booksCsvsImport = Date.now() - startInsertCsvLibros;
     
@@ -130,8 +138,8 @@ const metricas = {
     mongoExport.ProcessArguments.push("--noHeaderLine");
     await mongoExport.ExecuteAsync(true);
 
-    await loadCsvMysql.loadCsvFiles(1, "autorMongoBackup", "Autor", "root", "22194");
-    await loadCsvMysql.loadCsvFiles(1, "mongoLibrosBackup", "Libro", "root", "22194");
+    await loadCsvMysql.loadCsvFiles(1, "autorMongoBackup", "Autor", "B", "22194");
+    await loadCsvMysql.loadCsvFiles(1, "mongoLibrosBackup", "Libro", "A", "22194");
     console.log(`[Importar y Exportar Mongo/Mysql] Tiempo total: ${Date.now() - startExportImport} ms`);
     metricas.mysql.ExportImport = Date.now() - startExportImport;
 
