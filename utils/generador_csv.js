@@ -1,4 +1,4 @@
-var FileStream = require('fs');
+var FileStream = require('fs').promises;
 const Process = require('./Process');
 
 function random_number(min, max) {
@@ -38,9 +38,8 @@ async function getLicenses() {
     return licenses;
 }
 
-function generate_AuthorsCsv(size, stream) {
+async function generate_AuthorsCsv(size) {
     let csv = "";
-    let _stream = stream ? FileStream.createWriteStream(stream, {flags: 'w'}) : null;
     let licenses = new Set();
 
     for (let i = 0; i < size; i++) {
@@ -52,31 +51,19 @@ function generate_AuthorsCsv(size, stream) {
         
         licenses.add(license);
 
-        const id = i + 1;
+        const id =  Math.random().toFixed(7).toString().replace('.', '');
         const name = random_text(random_number(5, 20));
         const lastname = random_text(random_number(5, 20));
         const secondLastName = random_text(random_number(5, 20));
         const year = random_number(1960, 2000);
 
-        const line = `${id},${license},${name},${lastname},${secondLastName},${year}\n`;
-
-        if (stream) {
-            _stream.write(line);
-        } else {
-            csv += line;
-        }
+        csv += `${id},${license},${name},${lastname},${secondLastName},${year}\n`;
     }
-
-    if (!stream) {
-        return { csv };
-    }
-
-    _stream.close();
+    return csv
 }
 
-async function generate_BooksCsv(size, stream){
+async function generate_BooksCsv(size){
     let csv = "";
-    let _stream = stream ? FileStream.createWriteStream(stream, {flags: 'w'}) : null;
     const licenses = await getLicenses();
 
     if (licenses.length === 0) {
@@ -84,7 +71,7 @@ async function generate_BooksCsv(size, stream){
     }
 
     for (let i = 0; i < size; i++) {
-        const id = Math.floor(Math.random() * 10000);
+        const id = Math.random().toFixed(7).toString().replace('.', '');
         const ISBN = random_text(16, true);
         const title = random_text(random_number(5, 20));
         const autor_license = licenses[Math.floor(Math.random() * licenses.length)];
@@ -97,25 +84,33 @@ async function generate_BooksCsv(size, stream){
         const sinopsis = random_text(random_number(5, 50));
         const content = random_text(random_number(5, 50));
 
-        if(stream){
-            _stream.write(`${id},${ISBN},${title},${autor_license},${editorial},${pages},${year},${genre},${language},${format},${sinopsis},${content}\n`);
-        }else{
-            csv += `${id},${ISBN},${title},${autor_license},${editorial},${pages},${year},${genre},${language},${format},${sinopsis},${content}\n`
-        }
+        csv += `${id},${ISBN},${title},${autor_license},${editorial},${pages},${year},${genre},${language},${format},${sinopsis},${content}\n`
     }
+    return csv    
 }
 
 async function generate_Autorfiles(numFiles, size) {
-    for(let i= 1; i <= numFiles; i++){
-        const authorFilePath = `C:\\ProgramData\\MySQL\\MySQL Server 9.1\\Uploads\\Autores${i}.csv`;    
-        generate_AuthorsCsv(size, authorFilePath);
+    for (let i = 1; i <= numFiles; i++) {
+        const csvData = await generate_AuthorsCsv(size);
+        const filePath = `C:\\ProgramData\\MySQL\\MySQL Server 9.1\\Uploads\\Autores${i}.csv`;
+        try {
+            await FileStream.writeFile(filePath, csvData);
+        } catch (error) {
+            console.error(`Error escribiendo el archivo ${filePath}:`, error);
+        }
     }
 }
 
 async function generate_Bookfiles(numFiles, size, fileName) {
     for(let i= 1; i <= numFiles; i++){
-        const bookFilePath = `C:\\ProgramData\\MySQL\\MySQL Server 9.1\\Uploads\\${fileName}${i}.csv`;  
-        await generate_BooksCsv(size, bookFilePath);
+        const csvData = await generate_BooksCsv(size);
+        const filePath = `C:\\ProgramData\\MySQL\\MySQL Server 9.1\\Uploads\\${fileName}${i}.csv`;  
+
+        try {
+            await FileStream.writeFile(filePath, csvData);
+        } catch (error) {
+            console.error(`Error escribiendo el archivo ${filePath}:`, error);
+        }
     }
 }
 

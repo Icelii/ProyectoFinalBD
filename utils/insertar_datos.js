@@ -37,7 +37,7 @@ async function mysql_insertAutor(threads, repeticiones) {
             mysql.Write('\n');
 
             for (let i = 0; i < repeticiones; i++) {
-                const id = Math.floor(Math.random() * 10000);
+                const id = Math.random().toFixed(7).toString().replace('.', '');
                 let license;
 
                 do {
@@ -82,7 +82,7 @@ async function mysql_insertLibro(threads, repeticiones) {
             mysql.Write('\n');
 
             for (let i = 0; i < repeticiones; i++) {
-                const id = random_number(1, 2000);
+                const id = Math.random().toFixed(7).toString().replace('.', '');
                 const ISBN = random_text(16, true);
                 const title = random_text(random_number(5, 20));
                 const autor_license = licenses[Math.floor(Math.random() * licenses.length)];

@@ -1,8 +1,9 @@
 const Process = require('./utils/Process');
+const FileStream = require('fs');
 const sleep = require('./utils/sleep');
 const generadorCsv = require("./utils/generador_csv")
 const insertData = require("./utils/insertar_datos") 
-const loadCsvMysql = require("./utils/insertar_csv");
+const loadCsv = require("./utils/insertar_csv");
 
 const metricas = {
     mysql: {
@@ -27,15 +28,7 @@ const metricas = {
     //Tiempo que toma generar 150,000 Autores e insertarlos
     const startAutorCsv = Date.now();
     await generadorCsv.generate_Autorfiles(1, 150000);
-    const insertCsvAutor = new Process("mysql");
-    insertCsvAutor.ProcessArguments.push("-uroot");
-    insertCsvAutor.ProcessArguments.push("--password=22194");
-    insertCsvAutor.Execute();
-    insertCsvAutor.Write("use ProyectoBD;");
-    insertCsvAutor.Write("LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 9.1/Uploads/Autores1.csv' INTO TABLE Autor FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n';");
-    insertCsvAutor.End();
-    await insertCsvAutor.Finish();
-    
+    await loadCsv.loadCsvFiles(1, "Autores", "Autor");
     console.log(`[Generar 1 csv 150,000 Autores e insertarlos] Tiempo total: ${Date.now() - startAutorCsv} ms`);
     metricas.mysql.autorCsv = Date.now() - startAutorCsv;
     
@@ -47,7 +40,7 @@ const metricas = {
 
     //Tiempo que toma insertar el CSV
     const insertCsvBook = Date.now();
-    await loadCsvMysql.loadCsvFiles(2, "Librospt", "Libro", "A", "22194");
+    await loadCsv.loadCsvFiles(1, "Librospt", "Libro");
     console.log(`[Insertar 1 csv Libros] Tiempo total: ${Date.now() - insertCsvBook} ms`);
     metricas.mysql.booksCsvImport = Date.now() - insertCsvBook;
 
@@ -65,7 +58,7 @@ const metricas = {
     
     //Tiempo que toma insertar los 100 archivos a MySQL
     const startInsertCsvLibros = Date.now();
-    await loadCsvMysql.loadCsvFiles(100, "Libros", "Libro", "A", "22194");
+    await loadCsv.loadCsvFiles(100, "Libros", "Libro");
     console.log(`[Insertar 100 csv archivos a mysql Tiempo total: ${Date.now() - startInsertCsvLibros} ms`);
     metricas.mysql.booksCsvsImport = Date.now() - startInsertCsvLibros;
     
@@ -138,8 +131,8 @@ const metricas = {
     mongoExport.ProcessArguments.push("--noHeaderLine");
     await mongoExport.ExecuteAsync(true);
 
-    await loadCsvMysql.loadCsvFiles(1, "autorMongoBackup", "Autor", "B", "22194");
-    await loadCsvMysql.loadCsvFiles(1, "mongoLibrosBackup", "Libro", "A", "22194");
+    await loadCsv.loadCsvFiles(1, "autorMongoBackup", "Autor");
+    await loadCsv.loadCsvFiles(1, "mongoLibrosBackup", "Libro");
     console.log(`[Importar y Exportar Mongo/Mysql] Tiempo total: ${Date.now() - startExportImport} ms`);
     metricas.mysql.ExportImport = Date.now() - startExportImport;
 
@@ -198,15 +191,9 @@ const metricas = {
 
     //Generar 1,000,000 de datos en MongoDB para libros
     const csvMongo = Date.now();
-    await generadorCsv.generate_Bookfiles(1, 1000000, "MongoLibros");
-
-    const mongoImportLibros = new Process("mongoimport");
-    mongoImportLibros.ProcessArguments.push("--db", "ProyectoBD");
-    mongoImportLibros.ProcessArguments.push("--collection", "Libro");
-    mongoImportLibros.ProcessArguments.push("--type", "csv");
-    mongoImportLibros.ProcessArguments.push("--file","C://ProgramData//MySQL//MySQL Server 9.1//Uploads//MongoLibros1.csv");
-    mongoImportLibros.ProcessArguments.push("--fields", "id,ISBN,title,autor_license,editorial,pages,year,genre,language,format,sinopsis,content");
-    await mongoImportLibros.ExecuteAsync(true);
+    await generadorCsv.generate_Bookfiles(2, 500000, "MongoLibros");
+    const bookFields = "id,ISBN,title,autor_license,editorial,pages,year,genre,language,format,sinopsis,content";
+    await loadCsv.loadCsvFilesMongo(2, "MongoLibros", bookFields);
    
     const mongoExportLibros = new Process("mongoexport");
     mongoExportLibros.ProcessArguments.push("--db", "ProyectoBD");
@@ -226,7 +213,7 @@ const metricas = {
     importCsvMongo.End();
     await importCsvMongo.Finish();
 
-    await loadCsvMysql.loadCsvFiles(1, "oldBooks", "old_books", "root", "22194");
+    await loadCsv.loadCsvFiles(1, "oldBooks", "old_books");
     console.log(`[Crear 1,000,000 en mongo, exportar campos a csv, crear tabla old_books en mysql e insertar csv] Tiempo total: ${Date.now() - csvMongo} ms`);
     metricas.mysql.lastImportExport = Date.now() - csvMongo;
 
@@ -303,7 +290,7 @@ function generarReporte(metricas) {
         ],
         data: [
             metricas.mysql.errorLibro,
-            metricas.mysql.exportTablesCsv,
+            metricas.mysql.lastImportExport,
         ],
         title: "Pruebas de rendimiento de MySQL y MongoDB",
     };
