@@ -80,8 +80,8 @@ const metricas = {
     exportTablesCsv.ProcessArguments.push("--password=22194");
     exportTablesCsv.Execute();
     exportTablesCsv.Write("USE ProyectoBD;");
-    exportTablesCsv.Write("SELECT * INTO OUTFILE 'C://ProgramData//MySQL//MySQL Server 9.1//Uploads//autorTable.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' FROM Autor;");
-    exportTablesCsv.Write("SELECT * INTO OUTFILE 'C://ProgramData//MySQL//MySQL Server 9.1//Uploads//libroTable.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' FROM Libro;");
+    exportTablesCsv.Write("SELECT * INTO OUTFILE 'C://ProgramData//MySQL//MySQL Server 9.1//Uploads//autorTable1.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' FROM Autor;");
+    exportTablesCsv.Write("SELECT * INTO OUTFILE 'C://ProgramData//MySQL//MySQL Server 9.1//Uploads//libroTable1.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' FROM Libro;");
     exportTablesCsv.End();
     await exportTablesCsv.Finish();
     console.log(`[Exportar tablas a csv] Tiempo total: ${exportTablesCsv.EndTime - exportTablesCsv.StartTime} ms`);
@@ -89,19 +89,11 @@ const metricas = {
 
     //Tiempo que toma respaldar ambas tablas a MongoDB, eliminarlas de MySQL, exportar el respaldo de MongoDB y restaurarlo en MySQL.
     const startExportImport = Date.now();
-    const mongoImport = new Process("mongoimport");
-    mongoImport.ProcessArguments.push("--db", "ProyectoBD");
-    mongoImport.ProcessArguments.push("--collection", "Autor");
-    mongoImport.ProcessArguments.push("--type", "csv");
-    mongoImport.ProcessArguments.push("--file","C://ProgramData//MySQL//MySQL Server 9.1//Uploads//autorTable.csv");
-    mongoImport.ProcessArguments.push("--fields", "id,license,name,lastName,secondLastName,year");
-    await mongoImport.ExecuteAsync(true);
-    mongoImport.ProcessArguments.push("--db", "ProyectoBD");
-    mongoImport.ProcessArguments.push("--collection", "Libro");
-    mongoImport.ProcessArguments.push("--type", "csv");
-    mongoImport.ProcessArguments.push("--file","C://ProgramData//MySQL//MySQL Server 9.1//Uploads//libroTable.csv");
-    mongoImport.ProcessArguments.push("--fields", "id,ISBN,title,autor_license,editorial,pages,year,genre,language,format,sinopsis,content");
-    await mongoImport.ExecuteAsync(true);
+    const autorFields = "id,license,name,lastName,secondLastName,year";
+    await loadCsv.loadCsvFilesMongo(1, "autorTable", "Autor", autorFields);
+
+    const bookFields = "id,ISBN,title,autor_license,editorial,pages,year,genre,language,format,sinopsis,content";
+    await loadCsv.loadCsvFilesMongo(1, "libroTable", "Libro", bookFields);
 
     const truncateTables = new Process("mysql");
     truncateTables.ProcessArguments.push("-uroot");
@@ -192,8 +184,8 @@ const metricas = {
     //Generar 1,000,000 de datos en MongoDB para libros
     const csvMongo = Date.now();
     await generadorCsv.generate_Bookfiles(2, 500000, "MongoLibros");
-    const bookFields = "id,ISBN,title,autor_license,editorial,pages,year,genre,language,format,sinopsis,content";
-    await loadCsv.loadCsvFilesMongo(2, "MongoLibros", bookFields);
+    const bookFields2 = "id,ISBN,title,autor_license,editorial,pages,year,genre,language,format,sinopsis,content";
+    await loadCsv.loadCsvFilesMongo(2, "MongoLibros", "Libro" ,bookFields2);
    
     const mongoExportLibros = new Process("mongoexport");
     mongoExportLibros.ProcessArguments.push("--db", "ProyectoBD");

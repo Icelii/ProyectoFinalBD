@@ -14,10 +14,10 @@ async function loadCsvMysql(archivo, table) {
     await csvInsert.Finish();
 }
 
-async function loadCSVMongo(archivo, fields) {
+async function loadCSVMongo(archivo, collection, fields) {
     const mongoImportLibros = new Process("mongoimport");
     mongoImportLibros.ProcessArguments.push("--db", "ProyectoBD");
-    mongoImportLibros.ProcessArguments.push("--collection", "Libro");
+    mongoImportLibros.ProcessArguments.push("--collection", collection);
     mongoImportLibros.ProcessArguments.push("--type", "csv");
     mongoImportLibros.ProcessArguments.push("--file", `C://ProgramData//MySQL//MySQL Server 9.1//Uploads//${archivo}`);
     mongoImportLibros.ProcessArguments.push("--fields", fields);
@@ -37,14 +37,14 @@ async function loadCsvFiles(filesToLoad, prefix, table) {
     }
 }
 
-async function loadCsvFilesMongo(filesToLoad, prefix, fields) {
+async function loadCsvFilesMongo(filesToLoad, prefix, collection, fields) {
     try {
         const archivos = [];
         for (let i = 1; i <= filesToLoad; i++) {
             archivos.push(`${prefix}${i}.csv`);
         }
 
-        await Promise.all(archivos.map(archivo => loadCSVMongo(archivo, fields)));
+        await Promise.all(archivos.map(archivo => loadCSVMongo(archivo, collection, fields)));
     } catch (error) {
         console.error('Hubo un error al cargar los archivos:', error);
     }
